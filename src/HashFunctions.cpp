@@ -1,4 +1,4 @@
-#include "../include/HashFunctions.hpp"
+#include "../include/HashFunctions.h"
 
 // Algoritmo djb2, excelente para strings generales (nombres)
 size_t hash_djb2(const std::string& key, size_t table_size) {
