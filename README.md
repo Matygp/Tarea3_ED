@@ -30,7 +30,7 @@ Tarea3_ED/
 ├── graficador.py               # Script de Python para análisis estadístico y gráficos
 ├── resultados_experimento.csv  # Dataset métrico generado por la suite de C++
 └── README.md                   # Este archivo
-
+```
 
 
 ---
