@@ -98,10 +98,3 @@ El script de Python generará automáticamente los siguientes archivos en la ra�
 
 ---
 
-
-
-
-
-```
-
-```
