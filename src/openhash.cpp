@@ -1,51 +1,51 @@
+// src/openhash.cpp
 #include "../include/openhash.h"
 
-OpenHash::OpenHash(size_t size, HashFunction hf) {
+OpenHash::OpenHash(size_t size, HashFunc hf) {
     table_size = size;
-    table.resize(size); // Inicializamos el vector con la cantidad de buckets
-    num_elements = 0;
+    table.resize(table_size);
     hash_func = hf;
+    num_elements = 0;
 }
 
 void OpenHash::insert(const std::string& key) {
-    // 1. Calculamos el índice usando la función hash provista
     size_t index = hash_func(key, table_size);
     
-    // 2. Buscamos si la clave ya existe en la lista enlazada de ese bucket
     for (auto& node : table[index]) {
         if (node.key == key) {
-            node.count++; // Si existe, H[k] = H[k] + 1
+            node.count++;
             return;
         }
     }
-    
-    // 3. Si no existe, agregamos un nuevo nodo al final de la lista
-    table[index].push_back(HashNode(key)); // else H[k] = 1
+    table[index].emplace_back(key, 1);
     num_elements++;
 }
 
 int OpenHash::get_count(const std::string& key) const {
     size_t index = hash_func(key, table_size);
+    
     for (const auto& node : table[index]) {
         if (node.key == key) {
             return node.count;
         }
     }
-    return 0; // Si no se encuentra el usuario
+    return 0;
 }
 
 size_t OpenHash::get_memory_usage() const {
-    // Cálculo base de la instancia de la clase
-    size_t mem_total = sizeof(*this);
+    // Memoria base del objeto + almacenamiento continuo del vector de buckets
+    size_t memory = sizeof(*this) + (table.capacity() * sizeof(std::list<HashNode>));
     
-    // Memoria ocupada por el vector principal
-    mem_total += table.capacity() * sizeof(std::list<HashNode>);
-    
-    // Memoria ocupada por los nodos dentro de las listas enlazadas
     for (const auto& bucket : table) {
-        // En una std::list, cada nodo guarda la data (HashNode) + 2 punteros (prev y next)
-        mem_total += bucket.size() * (sizeof(HashNode) + 2 * sizeof(void*));
+        for (const auto& node : bucket) {
+            // Se calcula el tamaño real del nodo dinámico: payload + punteros next y prev
+            memory += sizeof(HashNode) + (2 * sizeof(void*)); 
+            
+            // Manejo de Small String Optimization (SSO) para strings largos en el Heap
+            if (node.key.capacity() * sizeof(char) > sizeof(std::string)) {
+                memory += node.key.capacity() * sizeof(char); 
+            }
+        }
     }
-    
-    return mem_total;
+    return memory;
 }

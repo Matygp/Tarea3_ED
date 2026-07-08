@@ -1,5 +1,4 @@
-#include "../include/ClosedHashTable.hpp"
-
+#include "../include/ClosedHashTable.h"
 // Calcula la siguiente potencia de 2 (optimización para usar máscara de bits en lugar de módulo)
 size_t ClosedHashTable::next_power_of_2(size_t n) const {
     size_t p = 1;

@@ -37,10 +37,20 @@ private:
     CollisionStrategy strategy;
     
     HashFunc hash_primary;
-    HashFunc hash_secondary; // Solo se usará si la estrategia es Double Hashing
+    HashFunc hash_secondary;
+
+    // Métodos privados para gestión interna
+    size_t next_power_of_2(size_t n) const;
+    void rehash();
+
+    // Plantillas que resuelven la estrategia en tiempo de compilación (cero branching)
+    template <CollisionStrategy S>
+    void insert_impl(const std::string& key, int count = 1);
+
+    template <CollisionStrategy S>
+    int get_count_impl(const std::string& key) const;
 
 public:
-    // Constructor
     ClosedHashTable(size_t size, CollisionStrategy strat, HashFunc h1, HashFunc h2 = nullptr);
     
     void insert(const std::string& key);

@@ -1,51 +1,89 @@
+// src/main.cpp
 #include <iostream>
 #include <chrono>
+#include <iomanip>
 #include "../include/TweetData.h"
 #include "../include/openhash.h"
+#include "../include/ClosedHashTable.h"
 #include "../include/HashFunctions.h"
 
 using namespace std;
 
 int main() {
-    string dataset_path = "data/auspol2019.csv"; // ruta archivo
+    string dataset_path = "data/auspol2019.csv"; 
     
-    cout << "- Cargando el dataset en memoria..." << endl;
+    cout << "=========================================================" << endl;
+    cout << "   BENCHMARK DE TABLAS HASH - ELECCIONES AUSPOL 2019" << endl;
+    cout << "=========================================================\n" << endl;
+
+    cout << "-> Cargando el dataset en memoria..." << endl;
     vector<TweetData> tweets = loadDataset(dataset_path);
     
     if (tweets.empty()) {
-        cout << "El dataset esta vacio o no se encontro el archivo." << endl;
+        cout << "[ERROR] El dataset esta vacio o no se encontro el archivo." << endl;
         return 1;
     }
-    cout << "Dataset cargado con exito. Total de tweets: " << tweets.size() << endl;
+    cout << "-> Dataset cargado con exito. Total de tweets: " << tweets.size() << "\n" << endl;
 
-    // Se prepara la tabla hash abierta
-    // Se usa un numero primo cercano al doble de los tweets para tener un buen factor de carga
-    size_t table_size = 300007; 
-    
-    // Se le pasa el tamaño y la funcion hash djb2 que programamos
-    OpenHash table_screen_name(table_size, hash_djb2);
+    // ========================================================================
+    // 1. OPEN HASHING (Encadenamiento)
+    // ========================================================================
+    size_t open_table_size = 300007; 
+    OpenHash table_open(open_table_size, hash_djb2);
 
-    cout << "\n2. Iniciando insercion en Open HashTable (Clave: user_screen_name)..." << endl;
+    cout << "[1] Ejecutando insercion en Open HashTable..." << endl;
     
-    // Se inicia el cronómetro
-    auto start = chrono::high_resolution_clock::now();
-    
-    //Se insertan todos los nombres de usuario
+    auto start_open = chrono::high_resolution_clock::now();
     for (const auto& tweet : tweets) {
-        table_screen_name.insert(tweet.user_screen_name);
+        table_open.insert(tweet.user_screen_name);
     }
+    auto end_open = chrono::high_resolution_clock::now();
+    chrono::duration<double, milli> duration_open = end_open - start_open;
     
-    // Detiene el cronómetro
-    auto end = chrono::high_resolution_clock::now();
-    chrono::duration<double, milli> duration = end - start;
-    
-    cout << "Insercion completada en: " << duration.count() << " milisegundos." << endl;
-    cout << "Memoria aproximada de la tabla: " << table_screen_name.get_memory_usage() / 1024 << " KB." << endl;
+    cout << "    - Tiempo de insercion : " << duration_open.count() << " ms." << endl;
+    cout << "    - Memoria aproximada  : " << table_open.get_memory_usage() / 1024 << " KB.\n" << endl;
 
-    // Pequeña prueba de validación
-    string test_user = "TaniaG"; //Podemos probar con un usuario real del dataset
-    cout << "\nPrueba de busqueda: El usuario " << test_user 
-         << " publico " << table_screen_name.get_count(test_user) << " tweets." << endl;
+    // ========================================================================
+    // 2. CLOSED HASHING (Direccionamiento Abierto)
+    // ========================================================================
+    size_t closed_table_size = 300000; 
+    ClosedHashTable table_closed(closed_table_size, QUADRATIC_PROBING, hash_djb2, hash_sdbm);
+
+    cout << "[2] Ejecutando insercion en Closed HashTable (Quadratic Probing)..." << endl;
+    
+    auto start_closed = chrono::high_resolution_clock::now();
+    for (const auto& tweet : tweets) {
+        table_closed.insert(tweet.user_screen_name);
+    }
+    auto end_closed = chrono::high_resolution_clock::now();
+    chrono::duration<double, milli> duration_closed = end_closed - start_closed;
+    
+    cout << "    - Tiempo de insercion : " << duration_closed.count() << " ms." << endl;
+    cout << "    - Memoria aproximada  : " << table_closed.get_memory_usage() / 1024 << " KB.\n" << endl;
+
+    // ========================================================================
+    // 3. PRUEBA DE VALIDACIÓN (Integridad de los datos)
+    // ========================================================================
+
+    string test_user = "nparmar1957"; 
+    
+    cout << "=========================================================" << endl;
+    cout << "   VALIDACION DE CONTEO PARA USUARIO: @" << test_user << endl;
+    cout << "=========================================================" << endl;
+    
+    int count_open = table_open.get_count(test_user);
+    int count_closed = table_closed.get_count(test_user);
+
+    cout << left << setw(25) << "Estructura" << " | Tweets contados" << endl;
+    cout << "---------------------------------------------------------" << endl;
+    cout << left << setw(25) << "OpenHash"   << " | " << count_open << endl;
+    cout << left << setw(25) << "ClosedHash" << " | " << count_closed << endl;
+
+    if (count_open == count_closed && count_open > 0) {
+        cout << "\n[EXITO] Ambas estructuras registran la misma cantidad de tweets." << endl;
+    } else {
+        cout << "\n[ADVERTENCIA] Hay una discrepancia en los conteos o el usuario no existe." << endl;
+    }
 
     return 0;
 }

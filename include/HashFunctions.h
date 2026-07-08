@@ -1,16 +1,11 @@
-#ifndef HASH_FUNCTIONS_HPP
-#define HASH_FUNCTIONS_HPP
+// include/HashFunctions.h
+#ifndef HASHFUNCTIONS_H
+#define HASHFUNCTIONS_H
 
 #include <string>
-#include <cstddef> //size_t
+#include <cstddef>
 
-// Función Hash ideal para user_screen_name (Algoritmo djb2)
-size_t hash_djb2(const std::string& key, size_t table_size);
-
-// Función Hash ideal para user_id tratado como texto (Algoritmo FNV-1a)
-size_t hash_fnv1a(const std::string& key, size_t table_size);
-
-// Función Hash secundaria (util para Double Hashing)
-size_t hash_secondary(const std::string& key, size_t table_size);
+size_t hash_djb2(const std::string& str, size_t table_size);
+size_t hash_sdbm(const std::string& str, size_t table_size);
 
 #endif
